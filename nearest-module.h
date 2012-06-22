@@ -18,6 +18,10 @@ typedef struct nearest_module
     FILE * file;
     /* Is this file a gz file? */
     int is_gz : 1;
+    /* Print blah messages? */
+    int verbose : 1;
+    /* Actually found something? */
+    int found : 1;
     /* The term to search for. */
     const char * search_term;
     /* The length of the search term. */
@@ -35,7 +39,7 @@ typedef struct nearest_module
 }
 nearest_module_t;
 
-#line 236 "nearest-module.c"
+#line 290 "nearest-module.c"
 char * cpan_nearest_search (char * file_name , char * search_term );
 
 #endif /* CFH_NEAREST_MODULE_H */

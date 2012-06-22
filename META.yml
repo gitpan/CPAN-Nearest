@@ -1,5 +1,5 @@
 ---
-abstract: unknown
+abstract: 'find the nearest module to a given name.'
 author:
   - 'Ben Bullock <bkb@cpan.org>'
 build_requires:
@@ -21,4 +21,4 @@ requires: {}
 resources:
   bugtracker: https://github.com/benkasminbullock/nearest-module/issues
   repository: https://github.com/benkasminbullock/nearest-module
-version: 0.02
+version: 0.03
