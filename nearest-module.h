@@ -11,11 +11,14 @@
 
 #line 17 "nearest-module.c"
 #define MAXLEN 0x400
+#define GZ_BUFFER_LEN 0x1000
 typedef struct nearest_module
 {
     /* The file to look at. */
     gzFile * gzfile;
     FILE * file;
+    unsigned char * gz_buffer;
+    int gz_buffer_at;
     /* Is this file a gz file? */
     int is_gz : 1;
     /* Print blah messages? */
@@ -39,7 +42,7 @@ typedef struct nearest_module
 }
 nearest_module_t;
 
-#line 199 "nearest-module.c"
+#line 272 "nearest-module.c"
 char * cpan_nearest_search (char * file_name , char * search_term );
 
 #endif /* CFH_NEAREST_MODULE_H */

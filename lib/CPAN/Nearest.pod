@@ -16,13 +16,30 @@ CPAN::Nearest - find the nearest module to a given name.
 
 Search the package detail file C<$file> for a module named
 C<$module_name> and return the closest name. E.g. if you search for
-"Harry::Potter", the closest module is "Data::Lotter".
+"Harry::Potter",
+
+    my $close_name = search ($file, 'Harry::Potter');
+
+the value in C<$close_name>, the closest CPAN module, is
+"Data::Lotter".
 
 The file specified by the first argument, C<$file> in the example, is
 usually found at F<~/.cpan/sources/modules/02packages.details.txt.gz>
-on a Unix-like system. This may be specified as the file name. To
-retrieve the results faster, specify an uncompressed version of this
-file.
+on a Unix-like system. This may be specified as the file name. This
+module can read either a compressed or uncompressed version. There is
+a speed increase of 10-20% when an uncompressed file is used.
+
+=head1 STANDALONE PROGRAM
+
+The distribution includes a standalone program called "nearest-module"
+as shown in L<this blog
+entry|http://blogs.perl.org/users/ben_bullock/2012/06/find-a-misspelt-module-name.html>. To
+use this program, edit the file F<nearest-module.c> in the top level
+of the distribution to point to the name of the file
+F<02packages.details.txt> or F<02packages.details.txt.gz> on your
+system, and compile it with
+
+    make -f makeitfile nearest-module
 
 =head1 AUTHOR
 
