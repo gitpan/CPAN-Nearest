@@ -9,7 +9,7 @@
 
 /* From 'nearest-module.c': */
 
-#line 18 "nearest-module.c"
+#line 17 "nearest-module.c"
 #define MAXLEN 0x400
 typedef struct nearest_module
 {
@@ -39,7 +39,7 @@ typedef struct nearest_module
 }
 nearest_module_t;
 
-#line 290 "nearest-module.c"
+#line 199 "nearest-module.c"
 char * cpan_nearest_search (char * file_name , char * search_term );
 
 #endif /* CFH_NEAREST_MODULE_H */
