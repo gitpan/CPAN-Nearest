@@ -14,6 +14,7 @@
 #include "nearest-module.h"
 #include "edit-distance.h"
 
+
 #ifdef HEADER
 
 /* String length restriction for maximum length of a module name. If
@@ -22,7 +23,13 @@
 
 #define MAXLEN 0x400
 
+/* The length of the buffer used to read the file when the file is
+   compressed. Setting this to 0x10000 made the program no faster, and
+   setting it to 0x100000 made the program slower. */
+
 #define GZ_BUFFER_LEN 0x1000
+
+static int max_unique_characters = 45;
 
 typedef struct nearest_module
 {
@@ -37,6 +44,11 @@ typedef struct nearest_module
     int verbose : 1;
     /* Actually found something? */
     int found : 1;
+    /* Use alphabet filter? */
+    int no_alphabet_filter : 1;
+
+    int use_alphabet : 1;
+
     /* The term to search for. */
     const char * search_term;
     /* The length of the search term. */
@@ -51,6 +63,8 @@ typedef struct nearest_module
     int distance;
     /* The name of the file to read from. */
     const char * file_name;
+    /* Alphabet */
+    int alphabet[0x100];
 }
 nearest_module_t;
 
@@ -78,10 +92,32 @@ static void nearest_compare_line (nearest_module_t * nearest)
     /* Shorthand for "nearest->buf". */
     char * b;
 
+
     b = nearest->buf;
-    /* Truncate "nearest->buf" at the first space character, or \0. */
-    for (l = 0; !isspace (b[l]) && b[l]; l++)
-        ;
+    if (nearest->use_alphabet) {
+        if (nearest->no_alphabet_filter) {
+            for (l = 0; !isspace (b[l]) && b[l]; l++)
+                ;
+        }
+        else {
+            int alphabet_misses;
+            alphabet_misses = 0;
+            /* Truncate "nearest->buf" at the first space character, or \0. */
+            for (l = 0; !isspace (b[l]) && b[l]; l++) {
+                int a = (unsigned char) b[l];
+                if (! nearest->alphabet[a]) {
+                    alphabet_misses++;
+                    if (alphabet_misses > nearest->distance) {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        for (l = 0; !isspace (b[l]) && b[l]; l++)
+            ;
+    }
     b[l] = '\0';
 
     d = distance (b, l, nearest->search_term, nearest->search_len,
@@ -164,6 +200,7 @@ nearest_close_file (nearest_module_t * nearest)
 {
     if (nearest->is_gz) {
         gzclose (nearest->gzfile);
+        free (nearest->gz_buffer);
     }
     else {
         fclose (nearest->file);
@@ -254,8 +291,30 @@ static void
 nearest_set_search_term (nearest_module_t * nearest,
                          const char * search_term)
 {
+    int unique_characters;
+    int i;
     nearest->search_term = search_term;
     nearest->search_len = strlen (nearest->search_term);
+    if (nearest->use_alphabet) {
+        for (i = 0; i < 0x100; i++) {
+            nearest->alphabet[i] = 0;
+        }
+        unique_characters = 0;
+        for (i = 0; i < nearest->search_len; i++) {
+            int c;
+            c = (unsigned char) search_term[i];
+            if (! nearest->alphabet[c]) {
+                unique_characters++;
+                nearest->alphabet[c] = 1;
+            }
+        }
+        if (unique_characters > max_unique_characters) {
+            nearest->no_alphabet_filter = 1;
+        }
+        else {
+            nearest->no_alphabet_filter = 0;
+        }
+    }
     return;
 }
 
@@ -271,6 +330,9 @@ char *
 cpan_nearest_search (char * file_name, char * search_term)
 {
     nearest_module_t nearest = {0};
+
+    /* Switch on the alphabet filter. */
+    nearest.use_alphabet = 1;
 
     nearest_set_search_term (& nearest, search_term);
     nearest_set_search_file (& nearest, file_name);
@@ -303,24 +365,37 @@ static void print_result (nearest_module_t * nearest)
     return;
 }
 
+const char * file_name =
+    "/home/ben/.cpan/sources/modules/02packages.details.txt.gz";
+
 int main (int argc, char ** argv)
 {
     nearest_module_t nearest = {0};
     char * st;
     if (argc > 1) {
-        if (strcmp (argv[1], "-v") == 0) {
-            nearest.verbose = 1;
-            st = argv[2];
-        }
-        else {
-            st = argv[1];
+        while (argc) {
+            char * arg = * argv;
+            if (strcmp (arg, "-v") == 0) {
+                nearest.verbose = 1;
+            }
+            else if (strcmp (arg, "-a") == 0) {
+                if (nearest.verbose) {
+                    printf ("Using alphabet.\n");
+                }
+                nearest.use_alphabet = 1;
+            }
+            else {
+                st = arg;
+            }
+            argc--;
+            argv++;
         }
     }
     else {
         st = "Lingua::Stop::Weirds";
     }
     nearest_set_search_term (& nearest, st);
-    nearest_set_search_file (& nearest, "02packages.details.txt.gz");
+    nearest_set_search_file (& nearest, file_name);
 
     search_packages (& nearest);
     print_result (& nearest);
