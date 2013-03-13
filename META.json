@@ -31,7 +31,9 @@
          }
       },
       "runtime" : {
-         "requires" : {}
+         "requires" : {
+            "Text::Fuzzy" : "0.08"
+         }
       }
    },
    "release_status" : "stable",
@@ -43,5 +45,5 @@
          "url" : "https://github.com/benkasminbullock/nearest-module"
       }
    },
-   "version" : "0.07"
+   "version" : "0.08"
 }

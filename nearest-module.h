@@ -12,11 +12,6 @@
 #line 18 "nearest-module.c"
 #define MAXLEN 0x400
 #define GZ_BUFFER_LEN 0x1000
-
-#line 32 "nearest-module.c"
-static int max_unique_characters= 45
-#line 32 "nearest-module.c"
-;
 typedef struct nearest_module
 {
     /* The file to look at. */
@@ -30,34 +25,23 @@ typedef struct nearest_module
     int verbose : 1;
     /* Actually found something? */
     int found : 1;
-    /* Use alphabet filter? */
-    int no_alphabet_filter : 1;
-
-    int use_alphabet : 1;
-
-    /* The term to search for. */
-    const char * search_term;
-    /* The length of the search term. */
-    int search_len;
     /* The buffer. */
     char buf[MAXLEN];
     /* The length of the buffer. */
     int buf_len;
     /* The nearest module to the search term. */
     char nearest[MAXLEN];
-    /* The edit distance from "search_term" to "nearest". */
-    int distance;
     /* The name of the file to read from. */
     const char * file_name;
-    /* Alphabet */
-    int alphabet[0x100];
+    /* Text::Fuzzy object. */
+    text_fuzzy_t tf;
 }
 nearest_module_t;
 
-#line 331 "nearest-module.c"
+#line 277 "nearest-module.c"
 char * cpan_nearest_search (char * file_name , char * search_term );
 
-#line 369 "nearest-module.c"
+#line 318 "nearest-module.c"
 
 #ifdef TEST
 extern const char * file_name;

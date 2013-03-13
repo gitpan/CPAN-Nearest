@@ -17,8 +17,9 @@ no_index:
   directory:
     - t
     - inc
-requires: {}
+requires:
+  Text::Fuzzy: 0.08
 resources:
   bugtracker: https://github.com/benkasminbullock/nearest-module/issues
   repository: https://github.com/benkasminbullock/nearest-module
-version: 0.07
+version: 0.08
