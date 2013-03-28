@@ -38,10 +38,10 @@ typedef struct nearest_module
 }
 nearest_module_t;
 
-#line 277 "nearest-module.c"
+#line 282 "nearest-module.c"
 char * cpan_nearest_search (char * file_name , char * search_term );
 
-#line 318 "nearest-module.c"
+#line 323 "nearest-module.c"
 
 #ifdef TEST
 extern const char * file_name;

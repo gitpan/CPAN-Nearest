@@ -73,25 +73,25 @@ static int nearest_compare_line (nearest_module_t * nearest)
 {
     /* The length of "nearest->buf" after truncation. */
     int l;
-    text_fuzzy_string_t b;
+    text_fuzzy_string_t * b;
 
-    b.text = nearest->buf;
+    b = & nearest->tf.b;
+    b->text = nearest->buf;
     /* Compute the length. */
-    for (l = 0; !isspace (b.text[l]) && b.text[l]; l++)
+    for (l = 0; !isspace (b->text[l]) && b->text[l]; l++)
 	;
-    b.length = l;
+    b->length = l;
     /* This is only necessary for the printf below, the edit
        distance routines completely ignore this, and only use "l" for
        the length. */
-    b.text[l] = '\0';
+    b->text[l] = '\0';
 
-    TEXT_FUZZY (compare_single (& nearest->tf, & b));
+    TEXT_FUZZY (compare_single (& nearest->tf));
     if (nearest->tf.found) {
 	nearest->found = 1;
 	if (nearest->verbose) {
-            printf ("%s (%d) is nearer.\n", b.text, nearest->tf.distance);
+            printf ("%s (%d) is nearer.\n", b->text, nearest->tf.distance);
 	}
-	nearest->tf.max_distance = nearest->tf.distance;
         strncpy (nearest->nearest, nearest->buf, l);
         nearest->nearest[l] = '\0';
     }
@@ -232,24 +232,29 @@ nearest_get_line (nearest_module_t * nearest)
     return 1;
 }
 
-static void search_packages (nearest_module_t * nearest)
+static int search_packages (nearest_module_t * nearest)
 {
     static int max_sane_distance = 10;
     static int more_lines;
+    int max;
+
     nearest_open_file (nearest);
     /* Don't use INT_MAX here or get overflow. */
-    nearest->tf.distance = nearest->tf.text.length + 1;
-    if (nearest->tf.distance > max_sane_distance) {
-	nearest->tf.distance = max_sane_distance;
+
+    max = nearest->tf.text.length + 1;
+    if (max > max_sane_distance) {
+	max = max_sane_distance;
     }
-    nearest->tf.max_distance = max_sane_distance;
+    nearest->tf.max_distance = max;
+    TEXT_FUZZY (begin_scanning (& nearest->tf));
     more_lines = 1;
     while (more_lines) {
         more_lines = nearest_get_line (nearest);
         nearest_compare_line (nearest);
     }
+    TEXT_FUZZY (end_scanning (& nearest->tf));
     nearest_close_file (nearest);
-    return;
+    return 0;
 }
 
 static int
