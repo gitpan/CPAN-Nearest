@@ -5,7 +5,7 @@ require Exporter;
 @EXPORT_OK = qw/search/;
 use warnings;
 use strict;
-our $VERSION = '0.09_02';
+our $VERSION = '0.10';
 use XSLoader;
 XSLoader::load 'CPAN::Nearest', $VERSION;
 
