@@ -74,6 +74,8 @@ error_handler_t text_fuzzy_error_handler =
 
 /* Fail a test, with message. */
 
+#ifdef __GNUC__
+
 #define FAIL_MSG(condition, status, msg, args...)                       \
     if (condition) {                                                    \
         LINE_ERROR (condition, status);                                 \
@@ -84,6 +86,20 @@ error_handler_t text_fuzzy_error_handler =
         }                                                               \
         return text_fuzzy_status_ ## status;                      \
     }
+
+#else /* __GNUC__ */
+
+#define FAIL_MSG fail_msg
+
+static void fail_msg (int condition, int status, char * msg, ...)
+{
+    if (condition) {
+	fprintf (stderr, "%d:%s", status, msg);
+	exit (1);
+    }
+}
+
+#endif /* __GNUC__ */
 
 #define OK return text_fuzzy_status_ok;
 
@@ -122,11 +138,13 @@ const char * text_fuzzy_statuses[] = {
     "max min miscalculation",
     "A string for comparison was larger than the value of HUGE defined in the code.",
     "An attempt was made to use the maximum edit distance which was unset.",
+    "miscount",
 };
 
 #define STATIC static
 #define FUNC(name) text_fuzzy_status_t text_fuzzy_ ## name
 
+#ifdef __GNUC__
 #ifdef VERBOSE
 #define MESSAGE(format, args...) {              \
         printf ("%s:%d: ", __FILE__, __LINE__); \
@@ -135,6 +153,10 @@ const char * text_fuzzy_statuses[] = {
 #else /* VERBOSE */
 #define MESSAGE(format, args...)
 #endif /* VERBOSE */
+#else /* __GNUC__ */
+#define MESSAGE empty_message
+static void empty_message (const char * format, ...) { return; }
+#endif /* __GNUC__ */
 
 /* Local variables:
 mode: c
@@ -205,6 +227,16 @@ typedef struct text_fuzzy_string {
 }
 text_fuzzy_string_t;
 
+/* Match candidates. */
+
+typedef struct candidate candidate_t;
+
+struct candidate {
+    int distance;
+    int offset;
+    candidate_t * next;
+};
+
 /* The following structure contains one string plus additional
    paraphenalia used in searching for the string, for example the
    alphabet of the string. */
@@ -231,6 +263,10 @@ typedef struct text_fuzzy {
     /* ASCII alphabet */
     int alphabet[0x100];
 
+    /* The number of characters which were rejected using the ASCII
+       alphabet. */
+    int alphabet_rejections;
+
     /* Unicode alphabet. */
     ualphabet_t ualphabet;
 
@@ -248,6 +284,23 @@ typedef struct text_fuzzy {
 
     /* A character which is not in use. */
     unsigned char invalid_char;
+
+    /* Candidates for an array match. */
+
+    candidate_t first;
+    candidate_t * last;
+
+    /* When scanning an array, put the index of the element of the
+       array into "text_fuzzy->offset". The offset of the nearest
+       elements are preserved in the "candidate_t" linked list which
+       starts off with "text_fuzzy". 
+
+       There is currently no sanity check, so if the user forgets to
+       set "offset" each time around the loop, the code will not
+       notice anything amiss and just send a list of zeros back to the
+       user. */
+
+    int offset;
 
     /* Does the user want to use an alphabet filter? Default is yes,
        so this must be set to a non-zero value to switch off use. */
@@ -276,6 +329,9 @@ typedef struct text_fuzzy {
 
     /* Are we scanning a list of entries? */
     unsigned int scanning : 1;
+
+    /* Do we want an array of answers? */
+    unsigned int wantarray : 1;
 }
 text_fuzzy_t;
 
@@ -593,6 +649,7 @@ FUNC (compare_single) (text_fuzzy_t * tf)
 				   are within the maximum edit distance of
 				   each other. */
 
+				tf->alphabet_rejections++;
 				OK;
 			    }
 			}
@@ -631,9 +688,88 @@ FUNC (compare_single) (text_fuzzy_t * tf)
 	if (tf->scanning) {
 	    tf->max_distance = tf->distance;
 	}
+	if (tf->wantarray) {
+	    candidate_t * c;
+	    c = malloc (sizeof (candidate_t));
+	    FAIL (! c, memory_error);
+	    tf->n_mallocs+=1;
+	    c->distance = d;
+	    c->offset = tf->offset;
+	    c->next = 0;
+	    tf->last->next = c;
+	    tf->last = c;
+	}
     }
     OK;
 }
+
+FUNC (get_candidates) (text_fuzzy_t * text_fuzzy,
+		       int * n_candidates_ptr,
+		       int ** candidates_ptr)
+{
+    candidate_t * c;
+    candidate_t * last;
+    int n_candidates = 0;
+    int * candidates;
+    int i;
+
+    last = text_fuzzy->first.next;
+    while (last) {
+	c = last;
+	last = last->next;
+	if (c->distance == text_fuzzy->distance) {
+	    n_candidates++;
+	}
+    }
+
+    if (n_candidates == 0) {
+	* n_candidates_ptr = 0;
+	* candidates_ptr = 0;
+	OK;
+    }
+
+    candidates = malloc (sizeof (int) * n_candidates);
+    FAIL (! candidates, memory_error);
+    text_fuzzy->n_mallocs+=1;
+
+    last = text_fuzzy->first.next;
+    i = 0;
+    while (last) {
+	c = last;
+
+	/* Set "last" to the next one here so that we do not
+	   access freed memory. */
+	last = last->next;
+	
+	/* Some of the entries might be things which had a lower
+	   distance initially, but then were beaten by later
+	   entries, so here we check that the entry actually does
+	   have the lowest distance, and only if so do we keep
+	   it. */
+	
+	if (c->distance == text_fuzzy->distance) {
+	    candidates[i] = c->offset;
+	    i++;
+	}
+	free (c);
+	text_fuzzy->n_mallocs--;
+    }
+    FAIL_MSG (i != n_candidates, miscount,
+	      "Wrong number of entries %d should be %d", i, n_candidates);
+    * candidates_ptr = candidates;
+    * n_candidates_ptr = n_candidates;
+    OK;
+}
+
+FUNC (free_candidates) (text_fuzzy_t * text_fuzzy, int * candidates)
+{
+    if (candidates) {
+	free (candidates);
+	text_fuzzy->n_mallocs--;
+    }
+    OK;
+}
+
 
 /* This is the threshold above which we do not bother computing the
    alphabet of the string. If it has more than this number of unique
@@ -700,7 +836,14 @@ FUNC (begin_scanning) (text_fuzzy_t * text_fuzzy)
 
     text_fuzzy->distance = -1;
     text_fuzzy->ualphabet.rejections = 0;
+    text_fuzzy->alphabet_rejections = 0;
     text_fuzzy->length_rejections = 0;
+
+    /* Set up the linked list. */
+
+    if (text_fuzzy->wantarray) {
+	text_fuzzy->last = & text_fuzzy->first;
+    }
 
     OK;
 }
@@ -855,6 +998,12 @@ FUNC (scan_file) (text_fuzzy_t * text_fuzzy, char * file_name,
     OK;
 }
 
+FUNC (alphabet_rejections) (text_fuzzy_t * text_fuzzy, int * r)
+{
+    * r = text_fuzzy->alphabet_rejections;
+    OK;
+}
+
 /* Free non-Perl malloc memory using the C library "free". This is all
    about "free to wrong pool". See
    "http://www.perlmonks.org/?node_id=742205" */
@@ -894,6 +1043,8 @@ status: max_distance_misuse
 %%description:
 An attempt was made to use the maximum edit distance which was unset.
 %%
+
+status: miscount
 
 */
 

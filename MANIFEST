@@ -1,18 +1,32 @@
-inc/Devel/CheckLib.pm
-lib/CPAN/Nearest.pm
-lib/CPAN/Nearest.pod
-Makefile.PL
-MANIFEST			This list of files
-nearest-module.c
-nearest-module.h
-Nearest.xs
-ppport.h
-t/CPAN-Nearest.t
-edit-distance-int.c
-edit-distance-int.h
+Changes
+config.h
+edit-distance-char-trans.c
+edit-distance-char-trans.h
 edit-distance-char.c
 edit-distance-char.h
+edit-distance-int-trans.c
+edit-distance-int-trans.h
+edit-distance-int.c
+edit-distance-int.h
+inc/Devel/CheckLib.pm
+leven-with-max.c
+lib/CPAN/Nearest.pm
+lib/CPAN/Nearest.pod
+lib/CPAN/Nearest.pod.tmpl
+Makefile.PL
+makeitfile
+MANIFEST			This list of files
+MANIFEST.SKIP
+nearest-module.c
+nearest-module.h
+Nearest.c
+Nearest.xs
+ppport.h
+README
+README.md
+t/CPAN-Nearest.t
 text-fuzzy.c
 text-fuzzy.h
+time-performance.pl
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)

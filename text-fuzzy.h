@@ -75,9 +75,22 @@ typedef enum {
     text_fuzzy_status_max_min_miscalculation,
     text_fuzzy_status_string_too_long,
     text_fuzzy_status_max_distance_misuse,
+    text_fuzzy_status_miscount,
 }
 text_fuzzy_status_t;
-
+#ifndef __GNUC__
+static int ok = text_fuzzy_status_ok;
+static int memory_error = text_fuzzy_status_memory_error;
+static int open_error = text_fuzzy_status_open_error;
+static int close_error = text_fuzzy_status_close_error;
+static int read_error = text_fuzzy_status_read_error;
+static int line_too_long = text_fuzzy_status_line_too_long;
+static int ualphabet_on_non_unicode = text_fuzzy_status_ualphabet_on_non_unicode;
+static int max_min_miscalculation = text_fuzzy_status_max_min_miscalculation;
+static int string_too_long = text_fuzzy_status_string_too_long;
+static int max_distance_misuse = text_fuzzy_status_max_distance_misuse;
+static int miscount = text_fuzzy_status_miscount;
+#endif /* __GNUC__ */
 
 /* Alphabet over unicode characters. */
 
@@ -120,6 +133,16 @@ typedef struct text_fuzzy_string {
 }
 text_fuzzy_string_t;
 
+/* Match candidates. */
+
+typedef struct candidate candidate_t;
+
+struct candidate {
+    int distance;
+    int offset;
+    candidate_t * next;
+};
+
 /* The following structure contains one string plus additional
    paraphenalia used in searching for the string, for example the
    alphabet of the string. */
@@ -146,6 +169,10 @@ typedef struct text_fuzzy {
     /* ASCII alphabet */
     int alphabet[0x100];
 
+    /* The number of characters which were rejected using the ASCII
+       alphabet. */
+    int alphabet_rejections;
+
     /* Unicode alphabet. */
     ualphabet_t ualphabet;
 
@@ -163,6 +190,23 @@ typedef struct text_fuzzy {
 
     /* A character which is not in use. */
     unsigned char invalid_char;
+
+    /* Candidates for an array match. */
+
+    candidate_t first;
+    candidate_t * last;
+
+    /* When scanning an array, put the index of the element of the
+       array into "text_fuzzy->offset". The offset of the nearest
+       elements are preserved in the "candidate_t" linked list which
+       starts off with "text_fuzzy". 
+
+       There is currently no sanity check, so if the user forgets to
+       set "offset" each time around the loop, the code will not
+       notice anything amiss and just send a list of zeros back to the
+       user. */
+
+    int offset;
 
     /* Does the user want to use an alphabet filter? Default is yes,
        so this must be set to a non-zero value to switch off use. */
@@ -191,20 +235,29 @@ typedef struct text_fuzzy {
 
     /* Are we scanning a list of entries? */
     unsigned int scanning : 1;
+
+    /* Do we want an array of answers? */
+    unsigned int wantarray : 1;
 }
 text_fuzzy_t;
-#line 152 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+#line 186 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
 text_fuzzy_status_t text_fuzzy_generate_ualphabet (text_fuzzy_t * tf);
-#line 337 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+#line 371 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
 text_fuzzy_status_t text_fuzzy_compare_single (text_fuzzy_t * tf);
-#line 508 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+#line 548 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+text_fuzzy_status_t text_fuzzy_get_candidates (text_fuzzy_t * text_fuzzy, int * n_candidates_ptr, int ** candidates_ptr);
+#line 605 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+text_fuzzy_status_t text_fuzzy_free_candidates (text_fuzzy_t * text_fuzzy, int * candidates);
+#line 622 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
 text_fuzzy_status_t text_fuzzy_generate_alphabet (text_fuzzy_t * text_fuzzy);
-#line 546 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+#line 660 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
 text_fuzzy_status_t text_fuzzy_begin_scanning (text_fuzzy_t * text_fuzzy);
-#line 570 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+#line 691 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
 text_fuzzy_status_t text_fuzzy_end_scanning (text_fuzzy_t * text_fuzzy);
-#line 664 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+#line 785 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
 text_fuzzy_status_t text_fuzzy_scan_file (text_fuzzy_t * text_fuzzy, char * file_name, char ** nearest_ptr);
-#line 717 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+#line 831 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
+text_fuzzy_status_t text_fuzzy_alphabet_rejections (text_fuzzy_t * text_fuzzy, int * r);
+#line 844 "/usr/home/ben/projects/Text-Fuzzy/text-fuzzy.c.in"
 text_fuzzy_status_t text_fuzzy_free_memory (text_fuzzy_t * text_fuzzy);
 #endif /* TEXT_FUZZY_H */
