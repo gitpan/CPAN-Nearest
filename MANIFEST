@@ -23,7 +23,6 @@ Nearest.c
 Nearest.xs
 ppport.h
 README
-README.md
 t/CPAN-Nearest.t
 text-fuzzy.c
 text-fuzzy.h
