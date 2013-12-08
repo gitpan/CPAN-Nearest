@@ -18,8 +18,8 @@ no_index:
     - t
     - inc
 requires:
-  Text::Fuzzy: 0.11
+  Text::Fuzzy: 0.15
 resources:
   bugtracker: https://github.com/benkasminbullock/nearest-module/issues
   repository: https://github.com/benkasminbullock/nearest-module
-version: 0.10
+version: 0.11

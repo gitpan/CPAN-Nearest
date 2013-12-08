@@ -37,7 +37,7 @@ WriteMakefile (
     AUTHOR => 'Ben Bullock <bkb@cpan.org>',
     LICENSE => 'perl',
     PREREQ_PM => {
-	'Text::Fuzzy' => '0.11',
+	'Text::Fuzzy' => '0.15',
     },
     META_MERGE => {
         resources => {
