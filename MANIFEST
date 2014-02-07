@@ -19,6 +19,7 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 nearest-module.c
 nearest-module.h
+Nearest.bs
 Nearest.c
 Nearest.xs
 ppport.h

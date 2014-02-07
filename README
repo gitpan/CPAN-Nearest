@@ -6,7 +6,7 @@
                                                                       
 
 
-This is the README for CPAN::Nearest version 0.11.
+This is the README for CPAN::Nearest version 0.12.
 
 CPAN::Nearest is a "module" for the Perl computer programming language, a
 library of computer code to install on a computer.  This document contains four
@@ -82,6 +82,8 @@ using
 
 3. INSTALLATION
 
+This module requires Perl version 5.8.0 or later.
+
 To install the module from CPAN, use
 
     cpan CPAN::Nearest
@@ -90,11 +92,11 @@ If you have the App::cpanminus installer, you may prefer
 
     cpanm CPAN::Nearest
 
-To install the module from the source file, CPAN-Nearest-0.11.tar.gz, follow
+To install the module from the source file, CPAN-Nearest-0.12.tar.gz, follow
 this sequence of commands:
 
-    tar xfz CPAN-Nearest-0.11.tar.gz
-    cd CPAN-Nearest-0.11
+    tar xfz CPAN-Nearest-0.12.tar.gz
+    cd CPAN-Nearest-0.12
     perl Makefile.PL
     make
     make install
@@ -119,6 +121,6 @@ repository on github at
 
 -----------------------------------------------------------------------------
 
-This README was written on Sun Dec  8 19:32:51 2013.
+This README was written on Fri Feb  7 14:54:48 2014.
 
 -----------------------------------------------------------------------------
